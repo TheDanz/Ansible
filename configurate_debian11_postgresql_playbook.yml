@@ -1,0 +1,46 @@
+- name: Configurate Debian 11
+  hosts: all
+  become: yes
+  tasks:
+    - name: Update the list of available packages and their versions
+      apt:
+        update_cache: yes
+
+    - name: Install newer versions of the packages
+      apt:
+        upgrade: yes
+
+    - name: Install utilities curl, git, ssh, gnupg2, wget, python3-psycopg2
+      apt:
+        name:
+          - curl
+          - git
+          - openssh-client
+          - gnupg2
+          - wget
+          - python3-psycopg2
+        state: present
+
+    - name: Add repo PostgreSQL
+      apt_repository:
+        repo: 'deb http://apt.postgresql.org/pub/repos/apt/ {{ ansible_lsb.codename }}-pgdg main'
+        state: present
+
+    - name: Install PostgreSQL 16
+      apt:
+        name: postgresql-16
+        state: present
+
+    - name: Enable PostgreSQL
+      systemd:
+        name: postgresql
+        state: started
+        enabled: yes
+
+    - name: Is PostgreSQL working?
+      command: pg_isready
+      register: postgres_status
+
+    - name: Print PostgreSQL status
+      debug:
+        var: postgres_status.stdout
